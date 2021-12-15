@@ -31,11 +31,11 @@ SuperTrend <- function(df,
 
   hla <- (df[, 1] + df[, 2]) / 2
 
-  df$upperband <- hla + (atr.multiplier * df$atr)
-  df$lowerband <- hla - (atr.multiplier * df$atr)
+  df$u_band <- hla + (atr.multiplier * df$atr)
+  df$l_band <- hla - (atr.multiplier * df$atr)
   df$in_uptrend <- TRUE
-  df$signal <- 0
-  df$in_pos <- FALSE
+  df$st_signal <- 0
+  df$in_position <- FALSE
 
   for (current in sim.start:nrow(df)) {
     previous <- current - 1
@@ -46,38 +46,38 @@ SuperTrend <- function(df,
       current + 1
     )
 
-    if (isTRUE(as.numeric(df[current, 3]) > as.numeric(df$upperband[previous]))) {
+    if (isTRUE(as.numeric(df[current, 3]) > as.numeric(df$u_band[previous]))) {
       df$in_uptrend[current] <- TRUE
-    } else if (isTRUE(as.numeric(df[current, 3]) < as.numeric(df$lowerband[previous]))) {
+    } else if (isTRUE(as.numeric(df[current, 3]) < as.numeric(df$l_band[previous]))) {
       df$in_uptrend[current] <- FALSE
     } else {
       df$in_uptrend[current] <- df$in_uptrend[previous]
 
-      if (isTRUE(as.logical(df$in_uptrend[current])) & isTRUE((as.numeric(df$lowerband[current]) < as.numeric(df$lowerband[previous])))) {
-        df$lowerband[current] <- df$lowerband[previous]
+      if (isTRUE(as.logical(df$in_uptrend[current])) & isTRUE((as.numeric(df$l_band[current]) < as.numeric(df$l_band[previous])))) {
+        df$l_band[current] <- df$l_band[previous]
       }
 
-      if (isTRUE(as.logical(!df$in_uptrend)) & isTRUE((as.numeric(df$upperband[current]) > as.numeric(df$upperband[previous])))) {
-        df$upperband[current] <- df$upperband[previous]
+      if (isTRUE(as.logical(!df$in_uptrend)) & isTRUE((as.numeric(df$u_band[current]) > as.numeric(df$u_band[previous])))) {
+        df$u_band[current] <- df$u_band[previous]
       }
     }
 
     if (isTRUE(as.logical(!df$in_uptrend[previous])) & isTRUE(as.logical(df$in_uptrend[current])) & isTRUE(as.numeric(df$rsi[current]) < buy.rsi.stop)) {
-      df$signal[current] <- 1
+      df$st_signal[current] <- 1
 
       if (!is.na(nxt)) {
-        df$in_pos[nxt:nrow(df)] <- TRUE
+        df$in_position[nxt:nrow(df)] <- TRUE
       }
     }
 
     if (isTRUE(as.logical(df$in_uptrend[previous])) & isTRUE(as.logical(!df$in_uptrend[current])) & isTRUE(as.numeric(df$rsi[current]) > sell.rsi.stop)) {
-      df$signal[current] <- -1
+      df$st_signal[current] <- -1
 
       if (!is.na(nxt)) {
-        df$in_pos[nxt:nrow(df)] <- FALSE
+        df$in_position[nxt:nrow(df)] <- FALSE
       }
     }
   }
 
-  df[, c("upperband", "lowerband", "in_uptrend", "signal", "in_pos")]
+  df[, c("u_band", "l_band", "in_uptrend", "st_signal", "in_position")]
 }
