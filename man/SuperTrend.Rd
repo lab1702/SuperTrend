@@ -12,7 +12,7 @@ SuperTrend(
 )
 }
 \description{
-Caldulates the SuperTrend indicator based on High, Low and Close columns.
+Caldulates the SuperTrend indicator based on OHLC data.
 }
 \examples{
 SuperTrend(d)

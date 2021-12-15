@@ -2,82 +2,77 @@
 #
 # SuperTrend with extensions implemented by Lars Bernhardsson 12/14/2021.
 #
-# Main algorithm translated from Python located at:
-#
-#    https://github.com/hackingthemarkets/supertrend-crypto-bot
-#
-# Current extensions:
-#    Adding a stop buy/sell based on RSI.
-#
 ###########################################################################
 
 
-SuperTrend <- function(df,
+SuperTrend <- function(x,
                        buy.rsi.stop = 60,
                        sell.rsi.stop = 40,
                        period = 7,
                        atr.multiplier = 3,
                        sim.start = 2) {
-  stopifnot(xts::xtsible(df))
-  stopifnot(xts::is.xts(df <- xts::as.xts(df)))
+  stopifnot(xts::xtsible(x))
+  stopifnot(xts::is.xts(x <- xts::as.xts(x)))
+  stopifnot(is.numeric(buy.rsi.stop <- as.numeric(buy.rsi.stop)))
+  stopifnot(is.numeric(sell.rsi.stop <- as.numeric(sell.rsi.stop)))
   stopifnot(is.numeric(period <- as.numeric(period)))
   stopifnot(is.numeric(atr.multiplier <- as.numeric(atr.multiplier)))
   stopifnot(is.numeric(sim.start <- as.numeric(sim.start)))
-  stopifnot(isTRUE(sim.start > 1) & isTRUE(sim.start < nrow(df)))
-  stopifnot(quantmod::is.HLC(df <- quantmod::HLC(df)))
+  stopifnot(isTRUE(sim.start > 1) & isTRUE(sim.start < nrow(x)))
+  stopifnot(quantmod::is.OHLC(x <- quantmod::OHLC(x)))
 
-  df <- merge(df, TTR::RSI(df[, 3]))
-  df <- merge(df, TTR::ATR(df, n = period))
+  x <- merge(x, TTR::RSI(x[, 4]))
+  x <- merge(x, TTR::ATR(x, n = period))
 
-  hla <- (df[, 1] + df[, 2]) / 2
+  hl2 <- (x[, 2] + x[, 3]) / 2
 
-  df$u_band <- hla + (atr.multiplier * df$atr)
-  df$l_band <- hla - (atr.multiplier * df$atr)
-  df$in_uptrend <- TRUE
-  df$st_signal <- 0
-  df$in_position <- FALSE
+  x$st_uband <- hl2 + (atr.multiplier * x$atr)
+  x$st_lband <- hl2 - (atr.multiplier * x$atr)
+  x$st_uptrend <- TRUE
+  x$st_signal <- 0
+  x$st_position <- FALSE
 
-  for (current in sim.start:nrow(df)) {
+  for (current in sim.start:nrow(x)) {
     previous <- current - 1
 
     nxt <- ifelse(
-      current == nrow(df),
+      current == nrow(x),
       NA,
       current + 1
     )
 
-    if (isTRUE(as.numeric(df[current, 3]) > as.numeric(df$u_band[previous]))) {
-      df$in_uptrend[current] <- TRUE
-    } else if (isTRUE(as.numeric(df[current, 3]) < as.numeric(df$l_band[previous]))) {
-      df$in_uptrend[current] <- FALSE
+    if (isTRUE(as.numeric(x[current, 4]) > as.numeric(x$st_uband[previous]))) {
+      x$st_uptrend[current] <- TRUE
+    } else if (isTRUE(as.numeric(x[current, 4]) < as.numeric(x$st_lband[previous]))) {
+      x$st_uptrend[current] <- FALSE
     } else {
-      df$in_uptrend[current] <- df$in_uptrend[previous]
+      x$st_uptrend[current] <- x$st_uptrend[previous]
 
-      if (isTRUE(as.logical(df$in_uptrend[current])) & isTRUE((as.numeric(df$l_band[current]) < as.numeric(df$l_band[previous])))) {
-        df$l_band[current] <- df$l_band[previous]
+      if (isTRUE(as.logical(x$st_uptrend[current])) & isTRUE((as.numeric(x$st_lband[current]) < as.numeric(x$st_lband[previous])))) {
+        x$st_lband[current] <- x$st_lband[previous]
       }
 
-      if (isTRUE(as.logical(!df$in_uptrend)) & isTRUE((as.numeric(df$u_band[current]) > as.numeric(df$u_band[previous])))) {
-        df$u_band[current] <- df$u_band[previous]
-      }
-    }
-
-    if (isTRUE(as.logical(!df$in_uptrend[previous])) & isTRUE(as.logical(df$in_uptrend[current])) & isTRUE(as.numeric(df$rsi[current]) < buy.rsi.stop)) {
-      df$st_signal[current] <- 1
-
-      if (!is.na(nxt)) {
-        df$in_position[nxt:nrow(df)] <- TRUE
+      if (isTRUE(as.logical(!x$st_uptrend)) & isTRUE((as.numeric(x$st_uband[current]) > as.numeric(x$st_uband[previous])))) {
+        x$st_uband[current] <- x$st_uband[previous]
       }
     }
 
-    if (isTRUE(as.logical(df$in_uptrend[previous])) & isTRUE(as.logical(!df$in_uptrend[current])) & isTRUE(as.numeric(df$rsi[current]) > sell.rsi.stop)) {
-      df$st_signal[current] <- -1
+    if (isTRUE(as.logical(!x$st_uptrend[previous])) & isTRUE(as.logical(x$st_uptrend[current])) & isTRUE(as.numeric(x$rsi[current]) < buy.rsi.stop)) {
+      x$st_signal[current] <- 1
 
       if (!is.na(nxt)) {
-        df$in_position[nxt:nrow(df)] <- FALSE
+        x$st_position[nxt:nrow(x)] <- TRUE
+      }
+    }
+
+    if (isTRUE(as.logical(x$st_uptrend[previous])) & isTRUE(as.logical(!x$st_uptrend[current])) & isTRUE(as.numeric(x$rsi[current]) > sell.rsi.stop)) {
+      x$st_signal[current] <- -1
+
+      if (!is.na(nxt)) {
+        x$st_position[nxt:nrow(x)] <- FALSE
       }
     }
   }
 
-  df[, c("u_band", "l_band", "in_uptrend", "st_signal", "in_position")]
+  return(x[, c("st_uband", "st_lband", "st_uptrend", "st_signal", "st_position")])
 }
