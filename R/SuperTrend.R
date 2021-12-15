@@ -1,16 +1,18 @@
-###########################################################################
+#########################################################################
 #
 # SuperTrend with extensions implemented by Lars Bernhardsson 12/14/2021.
 #
-###########################################################################
+# Main algorithm translated from Python located at:
+#
+#    https://github.com/hackingthemarkets/supertrend-crypto-bot
+#
+# Current extensions:
+#    Adding a stop buy/sell based on RSI.
+#
+#########################################################################
 
 
-SuperTrend <- function(x,
-                       buy.rsi.stop = 60,
-                       sell.rsi.stop = 40,
-                       period = 7,
-                       atr.multiplier = 3,
-                       sim.start = 2) {
+SuperTrend <- function(x, buy.rsi.stop = 60, sell.rsi.stop = 40, period = 7, atr.multiplier = 3, sim.start = 2) {
   stopifnot(xts::xtsible(x))
   stopifnot(xts::is.xts(x <- xts::as.xts(x)))
   stopifnot(is.numeric(buy.rsi.stop <- as.numeric(buy.rsi.stop)))
