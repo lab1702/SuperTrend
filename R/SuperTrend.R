@@ -2,6 +2,13 @@
 #
 # SuperTrend with extensions implemented by Lars Bernhardsson 12/14/2021.
 #
+# Main algorithm translated from Python located at:
+#
+#    https://github.com/hackingthemarkets/supertrend-crypto-bot
+#
+# Current extensions:
+#    Adding a stop buy/sell based on RSI.
+#
 ###########################################################################
 
 
@@ -11,22 +18,21 @@ SuperTrend <- function(df,
                        period = 7,
                        atr.multiplier = 3,
                        sim.start = 2) {
-  stopifnot(require(quantmod))
   stopifnot(xts::xtsible(df))
   stopifnot(xts::is.xts(df <- xts::as.xts(df)))
   stopifnot(is.numeric(period <- as.numeric(period)))
   stopifnot(is.numeric(atr.multiplier <- as.numeric(atr.multiplier)))
   stopifnot(is.numeric(sim.start <- as.numeric(sim.start)))
   stopifnot(isTRUE(sim.start > 1) & isTRUE(sim.start < nrow(df)))
-  stopifnot(quantmod::is.OHLCV(df <- quantmod::OHLCV(df)))
+  stopifnot(quantmod::is.HLC(df <- quantmod::HLC(df)))
 
-  df <- merge(df, TTR::RSI(df[, 4]))
+  df <- merge(df, TTR::RSI(df[, 3]))
   df <- merge(df, TTR::ATR(df, n = period))
 
-  hl2 <- (df[, 2] + df[, 3]) / 2
+  hla <- (df[, 1] + df[, 2]) / 2
 
-  df$upperband <- hl2 + (atr.multiplier * df$atr)
-  df$lowerband <- hl2 - (atr.multiplier * df$atr)
+  df$upperband <- hla + (atr.multiplier * df$atr)
+  df$lowerband <- hla - (atr.multiplier * df$atr)
   df$in_uptrend <- TRUE
   df$signal <- 0
   df$in_pos <- FALSE
@@ -40,9 +46,9 @@ SuperTrend <- function(df,
       current + 1
     )
 
-    if (isTRUE(as.numeric(df[current, 4]) > as.numeric(df$upperband[previous]))) {
+    if (isTRUE(as.numeric(df[current, 3]) > as.numeric(df$upperband[previous]))) {
       df$in_uptrend[current] <- TRUE
-    } else if (isTRUE(as.numeric(df[current, 4]) < as.numeric(df$lowerband[previous]))) {
+    } else if (isTRUE(as.numeric(df[current, 3]) < as.numeric(df$lowerband[previous]))) {
       df$in_uptrend[current] <- FALSE
     } else {
       df$in_uptrend[current] <- df$in_uptrend[previous]
@@ -73,5 +79,5 @@ SuperTrend <- function(df,
     }
   }
 
-  df
+  df[, c("upperband", "lowerband", "in_uptrend", "signal", "in_pos")]
 }
