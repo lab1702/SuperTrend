@@ -1,0 +1,10 @@
+Package: SuperTrend
+Type: Package
+Title: Calculate SuperTrend Indicator from HLC Data
+Version: 0.1.0
+Author: Lars Bernhardsson
+Maintainer: Lars Bernhardsson <lab1702@gmail.com>
+Description: This calculates the SuperTrend indicator which uses High, Low and Close ticker values.
+License: GNU General Public License version 3
+Encoding: UTF-8
+LazyData: true
