@@ -3,7 +3,7 @@ Type: Package
 Title: Calculate SuperTrend Indicator from HLC Data
 Version: 0.1.0
 Author: lab1702
-Maintainer: lab1702
+Maintainer: lab1702 <lab1702>
 Description: This calculates the SuperTrend indicator which uses High, Low and Close ticker values.
 License: GNU General Public License version 3
 Encoding: UTF-8
