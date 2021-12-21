@@ -1,21 +1,33 @@
 #########################################################################
 #
-# SuperTrend implemented in R by Lars Bernhardsson 12/14/2021.
+# SuperTrend with extensions implemented by Lars Bernhardsson 12/14/2021.
 #
 # Main algorithm translated from Python located at:
 #
 #    https://github.com/hackingthemarkets/supertrend-crypto-bot
 #
+# Current extensions:
+#    Adding a stop buy/sell based on RSI.
+#
 #########################################################################
 
 
-SuperTrend <- function(x, atr.period = 10, atr.multiplier = 3) {
+SuperTrend <- function(x,
+                       rsi.period = 14,
+                       buy.rsi.stop = 60,
+                       sell.rsi.stop = 40,
+                       atr.period = 7,
+                       atr.multiplier = 3) {
   stopifnot(xts::xtsible(x))
   stopifnot(xts::is.xts(x <- xts::as.xts(x)))
+  stopifnot(is.numeric(rsi.period <- as.numeric(rsi.period)))
+  stopifnot(is.numeric(buy.rsi.stop <- as.numeric(buy.rsi.stop)))
+  stopifnot(is.numeric(sell.rsi.stop <- as.numeric(sell.rsi.stop)))
   stopifnot(is.numeric(atr.period <- as.numeric(atr.period)))
   stopifnot(is.numeric(atr.multiplier <- as.numeric(atr.multiplier)))
   stopifnot(quantmod::is.OHLC(x <- quantmod::OHLC(x)))
 
+  x <- merge(x, TTR::RSI(x[, 4], n = rsi.period))
   x <- merge(x, TTR::ATR(x, n = atr.period))
 
   hl2 <- (x[, 2] + x[, 3]) / 2
@@ -51,7 +63,7 @@ SuperTrend <- function(x, atr.period = 10, atr.multiplier = 3) {
       }
     }
 
-    if (isTRUE(as.logical(!x$st_uptrend[previous])) & isTRUE(as.logical(x$st_uptrend[current]))) {
+    if (isTRUE(as.logical(!x$st_uptrend[previous])) & isTRUE(as.logical(x$st_uptrend[current])) & isTRUE(as.numeric(x$rsi[current]) < buy.rsi.stop)) {
       x$st_signal[current] <- 1
 
       if (!is.na(nxt)) {
@@ -59,7 +71,7 @@ SuperTrend <- function(x, atr.period = 10, atr.multiplier = 3) {
       }
     }
 
-    if (isTRUE(as.logical(x$st_uptrend[previous])) & isTRUE(as.logical(!x$st_uptrend[current]))) {
+    if (isTRUE(as.logical(x$st_uptrend[previous])) & isTRUE(as.logical(!x$st_uptrend[current])) & isTRUE(as.numeric(x$rsi[current]) > sell.rsi.stop)) {
       x$st_signal[current] <- -1
 
       if (!is.na(nxt)) {
