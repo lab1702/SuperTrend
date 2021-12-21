@@ -1,5 +1,4 @@
 export(SuperTrend)
-export(SuperTrendCombo)
 importFrom(xts,xtsible)
 importFrom(xts,as.xts)
 importFrom(xts,is.xts)
