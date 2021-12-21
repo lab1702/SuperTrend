@@ -4,11 +4,11 @@
 \usage{
 SuperTrend(
   df,
+  rsi.period = 14,
   buy.rsi.stop = 60,
   sell.rsi.stop = 40,
-  period = 7,
-  atr.multiplier = 3,
-  sim.start = 2
+  atr.period = 7,
+  atr.multiplier = 3
 )
 }
 \description{

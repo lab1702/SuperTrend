@@ -12,7 +12,12 @@
 #########################################################################
 
 
-SuperTrend <- function(x, buy.rsi.stop = 60, sell.rsi.stop = 40, period = 7, atr.multiplier = 3, sim.start = 2) {
+SuperTrend <- function(x,
+                       rsi.period = 14,
+                       buy.rsi.stop = 60,
+                       sell.rsi.stop = 40,
+                       atr.period = 7,
+                       atr.multiplier = 3) {
   stopifnot(xts::xtsible(x))
   stopifnot(xts::is.xts(x <- xts::as.xts(x)))
   stopifnot(is.numeric(buy.rsi.stop <- as.numeric(buy.rsi.stop)))
@@ -23,8 +28,8 @@ SuperTrend <- function(x, buy.rsi.stop = 60, sell.rsi.stop = 40, period = 7, atr
   stopifnot(isTRUE(sim.start > 1) & isTRUE(sim.start < nrow(x)))
   stopifnot(quantmod::is.OHLC(x <- quantmod::OHLC(x)))
 
-  x <- merge(x, TTR::RSI(x[, 4]))
-  x <- merge(x, TTR::ATR(x, n = period))
+  x <- merge(x, TTR::RSI(x[, 4], n = rsi.period))
+  x <- merge(x, TTR::ATR(x, n = atr.period))
 
   hl2 <- (x[, 2] + x[, 3]) / 2
 
@@ -34,7 +39,7 @@ SuperTrend <- function(x, buy.rsi.stop = 60, sell.rsi.stop = 40, period = 7, atr
   x$st_signal <- 0
   x$st_position <- FALSE
 
-  for (current in sim.start:nrow(x)) {
+  for (current in 2:nrow(x)) {
     previous <- current - 1
 
     nxt <- ifelse(
