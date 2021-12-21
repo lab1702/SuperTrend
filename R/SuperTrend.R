@@ -20,12 +20,11 @@ SuperTrend <- function(x,
                        atr.multiplier = 3) {
   stopifnot(xts::xtsible(x))
   stopifnot(xts::is.xts(x <- xts::as.xts(x)))
+  stopifnot(is.numeric(rsi.period <- as.numeric(rsi.period)))
   stopifnot(is.numeric(buy.rsi.stop <- as.numeric(buy.rsi.stop)))
   stopifnot(is.numeric(sell.rsi.stop <- as.numeric(sell.rsi.stop)))
-  stopifnot(is.numeric(period <- as.numeric(period)))
+  stopifnot(is.numeric(atr.period <- as.numeric(atr.period)))
   stopifnot(is.numeric(atr.multiplier <- as.numeric(atr.multiplier)))
-  stopifnot(is.numeric(sim.start <- as.numeric(sim.start)))
-  stopifnot(isTRUE(sim.start > 1) & isTRUE(sim.start < nrow(x)))
   stopifnot(quantmod::is.OHLC(x <- quantmod::OHLC(x)))
 
   x <- merge(x, TTR::RSI(x[, 4], n = rsi.period))
